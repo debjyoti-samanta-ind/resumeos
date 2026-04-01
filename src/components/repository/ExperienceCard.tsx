@@ -5,14 +5,16 @@ import { formatDateRange } from '../../utils/format';
 
 // ─── Org logo helpers ──────────────────────────────────────────────────────────
 
+const BASE = import.meta.env.BASE_URL;
+
 const LOGO_MAP: [string, string][] = [
-  ['zs associates', '/logos/ZS_Logo.png'],
-  ['merck', '/logos/Merck_Logo.png'],
-  ['university of washington', '/logos/UW_Logo.jpg'],
-  ['foster school', '/logos/UW_Logo.jpg'],
-  ['iiest', '/logos/IIEST_Logo.png'],
-  ['indian institute of engineering science', '/logos/IIEST_Logo.png'],
-  ['microsoft', '/logos/Microsoft_Logo.png'],
+  ['zs associates', `${BASE}logos/ZS_Logo.png`],
+  ['merck', `${BASE}logos/Merck_Logo.png`],
+  ['university of washington', `${BASE}logos/UW_Logo.jpg`],
+  ['foster school', `${BASE}logos/UW_Logo.jpg`],
+  ['iiest', `${BASE}logos/IIEST_Logo.png`],
+  ['indian institute of engineering science', `${BASE}logos/IIEST_Logo.png`],
+  ['microsoft', `${BASE}logos/Microsoft_Logo.png`],
 ];
 
 function getLogoUrl(org: string): string | null {
