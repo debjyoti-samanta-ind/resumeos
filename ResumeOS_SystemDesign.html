@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResumeOS — Product System Design</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f8f9fc;
+      color: #1e1e2e;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .page { max-width: 1100px; margin: 0 auto; padding: 40px 32px 60px; }
+
+    /* ── Print ── */
+    @media print {
+      body { background: white; font-size: 11.5px; }
+      .page { padding: 16px 20px 40px; max-width: 100%; }
+      .no-print { display: none !important; }
+      .page-break { page-break-after: always; }
+      section { page-break-inside: avoid; }
+      .deep-dive-header { page-break-before: always; }
+    }
+
+    /* ── Section label ── */
+    .section-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #6366f1;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::after { content:''; flex:1; height:1px; background:#e5e7eb; }
+
+    section { margin-bottom: 32px; }
+
+    /* ════════════════════════════════════
+       PAGE 1 — SUMMARY
+    ════════════════════════════════════ */
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      border-radius: 14px;
+      padding: 32px 40px;
+      color: white;
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content:''; position:absolute; right:-50px; top:-50px;
+      width:240px; height:240px; border-radius:50%;
+      background:rgba(255,255,255,0.06);
+    }
+    .hero-tag {
+      display:inline-block;
+      background:rgba(255,255,255,0.18);
+      border:1px solid rgba(255,255,255,0.3);
+      border-radius:20px; padding:3px 12px;
+      font-size:10px; font-weight:600;
+      letter-spacing:0.08em; text-transform:uppercase; margin-bottom:10px;
+    }
+    .hero h1 { font-size:28px; font-weight:800; letter-spacing:-0.5px; margin-bottom:6px; }
+    .hero p  { font-size:14px; opacity:0.88; max-width:680px; }
+    .hero-chips { display:flex; gap:12px; margin-top:18px; flex-wrap:wrap; }
+    .hero-chip {
+      background:rgba(255,255,255,0.15);
+      border:1px solid rgba(255,255,255,0.25);
+      border-radius:20px; padding:3px 12px;
+      font-size:11px; font-weight:500;
+    }
+
+    /* Summary two-col */
+    .summary-body {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:20px;
+      margin-bottom:20px;
+    }
+    @media(max-width:700px){ .summary-body{ grid-template-columns:1fr; } }
+
+    .summary-card {
+      background:white; border:1px solid #e5e7eb;
+      border-radius:12px; padding:20px;
+    }
+    .summary-card h3 {
+      font-size:11px; font-weight:700; text-transform:uppercase;
+      letter-spacing:0.08em; color:#6b7280; margin-bottom:12px;
+    }
+
+    /* Problem bullets */
+    .prob-list { list-style:none; display:flex; flex-direction:column; gap:9px; }
+    .prob-list li {
+      display:flex; gap:10px; align-items:flex-start;
+      font-size:12.5px; color:#374151;
+    }
+    .prob-dot {
+      width:18px; height:18px; border-radius:50%;
+      background:#fee2e2; color:#b91c1c;
+      font-size:10px; font-weight:800;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; margin-top:1px;
+    }
+
+    /* Pillar rows */
+    .pillar-rows { display:flex; flex-direction:column; gap:8px; }
+    .pillar-row {
+      display:flex; align-items:center; gap:10px;
+      background:#f8f9fc; border-radius:8px; padding:8px 12px;
+    }
+    .pillar-emoji { font-size:16px; flex-shrink:0; }
+    .pillar-row-text h4 { font-size:12px; font-weight:700; color:#111827; }
+    .pillar-row-text p  { font-size:11px; color:#6b7280; }
+
+    /* Journey strip */
+    .journey-strip { display:flex; flex-direction:column; gap:6px; }
+    .journey-step {
+      display:flex; align-items:flex-start; gap:10px;
+    }
+    .j-num {
+      width:22px; height:22px; border-radius:50%;
+      background:#4f46e5; color:white;
+      font-size:11px; font-weight:700;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; margin-top:1px;
+    }
+    .j-connector {
+      display:flex; flex-direction:column; align-items:center;
+      margin-left:10px; height:10px;
+    }
+    .j-line { width:1px; flex:1; background:#e0e7ff; }
+    .j-text h4 { font-size:12px; font-weight:700; color:#111827; }
+    .j-text p  { font-size:11px; color:#6b7280; }
+
+    /* Core insight */
+    .insight-box {
+      background:linear-gradient(135deg,#ede9fe,#dbeafe);
+      border:1px solid #c4b5fd; border-radius:10px;
+      padding:14px 16px; margin-top:14px;
+    }
+    .insight-box .ins-label {
+      font-size:10px; font-weight:700; text-transform:uppercase;
+      letter-spacing:0.08em; color:#5b21b6; margin-bottom:5px;
+    }
+    .insight-box p { font-size:12px; color:#1e1e2e; line-height:1.6; }
+
+    /* Bottom bar */
+    .summary-bottom {
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:16px;
+    }
+    @media(max-width:700px){ .summary-bottom{ grid-template-columns:1fr; } }
+
+    .decisions-strip {
+      background:white; border:1px solid #e5e7eb;
+      border-radius:12px; padding:16px 18px;
+    }
+    .decisions-strip h3 {
+      font-size:10px; font-weight:700; text-transform:uppercase;
+      letter-spacing:0.08em; color:#6b7280; margin-bottom:10px;
+    }
+    .dec-chips { display:flex; flex-direction:column; gap:7px; }
+    .dec-chip {
+      display:flex; gap:8px; align-items:flex-start;
+      font-size:12px; color:#374151;
+    }
+    .dec-chip-dot {
+      width:6px; height:6px; border-radius:50%;
+      background:#6366f1; flex-shrink:0; margin-top:5px;
+    }
+
+    .tech-strip {
+      background:white; border:1px solid #e5e7eb;
+      border-radius:12px; padding:16px 18px;
+    }
+    .tech-strip h3 {
+      font-size:10px; font-weight:700; text-transform:uppercase;
+      letter-spacing:0.08em; color:#6b7280; margin-bottom:10px;
+    }
+    .tech-rows { display:flex; flex-direction:column; gap:8px; }
+    .tech-row { display:flex; gap:8px; align-items:baseline; }
+    .tech-row .t-label {
+      font-size:10px; font-weight:700; text-transform:uppercase;
+      letter-spacing:0.06em; color:#9ca3af; width:80px; flex-shrink:0;
+    }
+    .tech-row .t-val { font-size:12px; color:#374151; }
+
+    /* ════════════════════════════════════
+       PAGE 2+ — DEEP DIVE
+    ════════════════════════════════════ */
+
+    .deep-dive-header {
+      background:linear-gradient(135deg,#1e1e2e,#2d2b55);
+      border-radius:14px; padding:24px 36px;
+      color:white; margin-bottom:32px;
+    }
+    .deep-dive-header .dd-tag {
+      display:inline-block;
+      background:rgba(255,255,255,0.12);
+      border:1px solid rgba(255,255,255,0.2);
+      border-radius:20px; padding:2px 10px;
+      font-size:10px; font-weight:600;
+      letter-spacing:0.08em; text-transform:uppercase; margin-bottom:8px;
+    }
+    .deep-dive-header h2 { font-size:22px; font-weight:800; margin-bottom:4px; }
+    .deep-dive-header p  { font-size:13px; opacity:0.7; }
+
+    /* Shared deep-dive cards */
+    .dd-card {
+      background:white; border:1px solid #e5e7eb;
+      border-radius:12px; overflow:hidden;
+    }
+    .dd-card-header {
+      padding:12px 18px; font-size:12px; font-weight:700;
+      display:flex; align-items:center; gap:8px;
+    }
+    .dd-card-body { padding:16px 18px; }
+
+    /* Lens diagram */
+    .lens-center { text-align:center; margin-bottom:16px; }
+    .lens-core {
+      display:inline-block;
+      background:#ede9fe; border:2px solid #7c3aed;
+      border-radius:10px; padding:9px 22px;
+      font-size:13px; font-weight:700; color:#4c1d95;
+    }
+    .lens-sub { font-size:11px; color:#6b7280; margin-top:4px; }
+    .lens-row { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+    .lens-card { flex:1; min-width:140px; max-width:200px; border-radius:9px; padding:12px 14px; }
+    .lens-fn  { font-size:11px; font-weight:700; margin-bottom:6px; }
+    .lens-bul { font-size:11px; color:#374151; line-height:1.5; border-left:3px solid; padding-left:8px; }
+
+    /* Scoring */
+    .scoring-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media(max-width:700px){ .scoring-grid{ grid-template-columns:1fr; } }
+
+    .dim-row {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:7px 0; border-bottom:1px solid #f3f4f6; gap:10px;
+    }
+    .dim-row:last-child { border-bottom:none; }
+    .dim-name { font-size:12px; color:#374151; flex:1; }
+    .dim-weight {
+      font-size:11px; font-weight:700; padding:2px 8px;
+      border-radius:20px; flex-shrink:0;
+    }
+    .dim-note { font-size:11px; color:#9ca3af; flex:2; text-align:right; }
+
+    .formula-bar {
+      background:#f0f9ff; border:1px solid #bae6fd;
+      border-radius:8px; padding:10px 16px; margin-top:14px;
+      font-size:12px; color:#0369a1; font-weight:600; text-align:center;
+    }
+
+    .benchmarks { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+    .bench {
+      flex:1; min-width:120px; background:white;
+      border:1px solid #e5e7eb; border-radius:8px;
+      padding:10px 14px; text-align:center;
+    }
+    .bench .b-score { font-size:20px; font-weight:800; }
+    .bench .b-label { font-size:11px; color:#6b7280; margin-top:2px; }
+
+    /* AI flow */
+    .ai-flow-row {
+      display:flex; align-items:stretch; gap:10px; flex-wrap:wrap;
+    }
+    .ai-box { border-radius:9px; padding:12px 14px; flex:1; min-width:130px; }
+    .ai-box h4 { font-size:12px; font-weight:700; margin-bottom:4px; }
+    .ai-box p  { font-size:11px; opacity:0.8; }
+    .ai-arrow { display:flex; align-items:center; font-size:18px; color:#d1d5db; flex-shrink:0; }
+    .ai-divider { border:none; border-top:1px dashed #e5e7eb; margin:18px 0; }
+    .ai-note {
+      background:#fefce8; border:1px solid #fde68a;
+      border-radius:8px; padding:10px 14px;
+      font-size:12px; color:#92400e; margin-top:14px;
+    }
+
+    /* Technical flowchart */
+    .arch-layer { display:flex; align-items:center; gap:12px; margin-bottom:4px; }
+    .arch-label {
+      width:100px; flex-shrink:0; text-align:right;
+      font-size:10px; font-weight:700; text-transform:uppercase;
+      letter-spacing:0.07em; color:#9ca3af;
+    }
+    .arch-boxes { flex:1; display:flex; gap:10px; flex-wrap:wrap; }
+    .arch-box {
+      flex:1; min-width:130px; border-radius:8px;
+      padding:10px 13px;
+    }
+    .arch-box h4 { font-size:11px; font-weight:700; margin-bottom:3px; }
+    .arch-box p  { font-size:11px; color:#64748b; }
+    .arch-arrow-row { display:flex; align-items:center; gap:12px; margin-bottom:4px; }
+    .arch-arrow-spacer { width:100px; flex-shrink:0; }
+    .arch-arrow-body { flex:1; }
+
+    /* Decisions */
+    .decisions-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    @media(max-width:700px){ .decisions-grid{ grid-template-columns:1fr; } }
+
+    .dec-card { background:white; border:1px solid #e5e7eb; border-radius:12px; padding:18px; }
+    .dec-tag {
+      font-size:10px; font-weight:700; text-transform:uppercase;
+      letter-spacing:0.08em; margin-bottom:8px;
+      display:inline-block; padding:2px 8px; border-radius:20px;
+    }
+    .dec-card h3 { font-size:13px; font-weight:700; color:#111827; margin-bottom:5px; }
+    .dec-card p  { font-size:12px; color:#6b7280; margin-bottom:10px; }
+    .dec-opts { display:flex; gap:8px; }
+    .dec-opt { flex:1; border-radius:7px; padding:8px 10px; font-size:11px; }
+    .dec-opt .opt-lbl { font-weight:700; font-size:10px; margin-bottom:2px; }
+
+    /* Tracker */
+    .tracker-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media(max-width:700px){ .tracker-grid{ grid-template-columns:1fr; } }
+
+    .t-card { background:white; border:1px solid #e5e7eb; border-radius:12px; padding:18px; }
+    .t-card h3 { font-size:13px; font-weight:700; color:#111827; margin-bottom:10px; }
+    .t-row {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:6px 0; border-bottom:1px solid #f3f4f6; font-size:12px;
+    }
+    .t-row:last-child { border-bottom:none; }
+    .t-badge { padding:2px 8px; border-radius:20px; font-size:10px; font-weight:700; }
+
+    /* Persistence */
+    .persist-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    @media(max-width:700px){ .persist-grid{ grid-template-columns:1fr; } }
+    .persist-box {
+      background:#f8fafc; border:1px solid #e2e8f0;
+      border-radius:8px; padding:12px 14px;
+    }
+    .persist-box h4 { font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; }
+    .persist-box p  { font-size:11px; color:#64748b; line-height:1.7; }
+    code {
+      background:#e2e8f0; padding:1px 4px;
+      border-radius:3px; font-size:10px;
+    }
+
+    /* Utility */
+    .chip {
+      display:inline-block; padding:2px 9px;
+      border-radius:20px; font-size:11px; font-weight:600;
+    }
+    .row-wrap { display:flex; gap:8px; flex-wrap:wrap; }
+    .mt12 { margin-top:12px; }
+    .mt16 { margin-top:16px; }
+    .mt20 { margin-top:20px; }
+
+    /* Print button */
+    .print-btn {
+      position:fixed; bottom:24px; right:24px;
+      background:#4f46e5; color:white; border:none;
+      border-radius:50px; padding:10px 20px;
+      font-size:13px; font-weight:600; cursor:pointer;
+      box-shadow:0 4px 14px rgba(79,70,229,0.4);
+    }
+    .print-btn:hover { background:#4338ca; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 1 — PRODUCT ONE-PAGER
+════════════════════════════════════════════════════════ -->
+
+  <!-- Zone 1: Hero -->
+  <div class="hero">
+    <div class="hero-tag">Product One-Pager</div>
+    <h1>ResumeOS</h1>
+    <p>A personal resume intelligence platform — store your career story once, tailor it for any role, score your fit against any job description, and track every application in one place.</p>
+    <div class="hero-chips">
+      <span class="hero-chip">Built by Debjyoti Samanta · UW Foster MBA 2026</span>
+      <span class="hero-chip">Solo-built using Claude Code + Claude API</span>
+      <span class="hero-chip">Local-first · No backend · Runs entirely in browser</span>
+    </div>
+  </div>
+
+  <!-- Zone 2: Problem + Solution (2 col) -->
+  <div class="summary-body" style="margin-bottom:16px;">
+
+    <div class="summary-card">
+      <h3>The Problem</h3>
+      <ul class="prob-list">
+        <li>
+          <div class="prob-dot">1</div>
+          <span>Applying across different functions and industries means the same experience needs to tell a different story per role — managing multiple resume versions manually is slow and inconsistent.</span>
+        </li>
+        <li>
+          <div class="prob-dot">2</div>
+          <span>Without an objective score, candidates can't measure how well their resume matches a JD or know which edits actually move the needle.</span>
+        </li>
+        <li>
+          <div class="prob-dot">3</div>
+          <span>Generic AI rewrites without knowing the real context behind bullets — producing polished but inaccurate text that fails the recruiter scan.</span>
+        </li>
+        <li>
+          <div class="prob-dot">4</div>
+          <span>After applying to many roles, there's no closed loop — which version was sent, what was the score, and what happened to the application?</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="summary-card">
+      <h3>The Solution — Four Pillars</h3>
+      <div class="pillar-rows">
+        <div class="pillar-row">
+          <span class="pillar-emoji">🗂️</span>
+          <div class="pillar-row-text">
+            <h4>Experience Repository</h4>
+            <p>One source of truth · multiple bullet "lenses" per achievement · full project context stored</p>
+          </div>
+        </div>
+        <div class="pillar-row">
+          <span class="pillar-emoji">🎯</span>
+          <div class="pillar-row-text">
+            <h4>JD Analyzer &amp; Scorer</h4>
+            <p>Two-layer score — ATS keyword ranking + human recruiter evaluation — against any job description</p>
+          </div>
+        </div>
+        <div class="pillar-row">
+          <span class="pillar-emoji">✏️</span>
+          <div class="pillar-row-text">
+            <h4>AI Edit Engine</h4>
+            <p>One AI call returns suggested edits with per-point impact · live score updates as you accept or decline</p>
+          </div>
+        </div>
+        <div class="pillar-row">
+          <span class="pillar-emoji">📋</span>
+          <div class="pillar-row-text">
+            <h4>Application Tracker</h4>
+            <p>Every application logged with the exact resume version sent, score at time of applying, and outcome</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page break: end of summary page 1 -->
+  <div class="page-break"></div>
+
+  <!-- Zone 3: How it works — full width -->
+  <div class="summary-card" style="margin-bottom:16px;">
+    <h3>How It Works — End-to-End User Journey</h3>
+    <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:0; margin-top:8px;">
+
+      <div style="display:flex; flex-direction:column; align-items:center; text-align:center; padding:0 10px;">
+        <div style="width:40px; height:40px; border-radius:50%; background:#4f46e5; color:white; font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; margin-bottom:12px;">1</div>
+        <div style="background:#f5f3ff; border:1px solid #ddd6fe; border-radius:10px; padding:14px 12px; width:100%;">
+          <h4 style="font-size:12px; font-weight:700; color:#111827; margin-bottom:5px;">Build the Repository</h4>
+          <p style="font-size:11.5px; color:#6b7280;">Add each role with full project context and bullet variants per target function. One-time setup.</p>
+          <div style="margin-top:8px; font-size:10px; font-weight:600; color:#7c3aed; background:#ede9fe; padding:2px 7px; border-radius:20px; display:inline-block;">One-time</div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; justify-content:center; padding-top:40px;">
+        <div style="font-size:22px; color:#c7d2fe;">→</div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; align-items:center; text-align:center; padding:0 10px;">
+        <div style="width:40px; height:40px; border-radius:50%; background:#4f46e5; color:white; font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; margin-bottom:12px;">2</div>
+        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:14px 12px; width:100%;">
+          <h4 style="font-size:12px; font-weight:700; color:#111827; margin-bottom:5px;">Paste JD · Upload Resume</h4>
+          <p style="font-size:11.5px; color:#6b7280;">Job description text + existing resume PDF. Text extracted instantly in the browser.</p>
+          <div style="margin-top:8px; font-size:10px; font-weight:600; color:#1d4ed8; background:#dbeafe; padding:2px 7px; border-radius:20px; display:inline-block;">Per application</div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; justify-content:center; padding-top:40px;">
+        <div style="font-size:22px; color:#c7d2fe;">→</div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; align-items:center; text-align:center; padding:0 10px;">
+        <div style="width:40px; height:40px; border-radius:50%; background:#4f46e5; color:white; font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; margin-bottom:12px;">3</div>
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:14px 12px; width:100%;">
+          <h4 style="font-size:12px; font-weight:700; color:#111827; margin-bottom:5px;">Get Scored</h4>
+          <p style="font-size:11.5px; color:#6b7280;">Instant deterministic score shown. "Analyze with AI" adds full job fit, gap analysis, and suggested edits.</p>
+          <div style="margin-top:8px; font-size:10px; font-weight:600; color:#15803d; background:#dcfce7; padding:2px 7px; border-radius:20px; display:inline-block;">~30 seconds</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Row 2 of journey (steps 4 & 5) -->
+    <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:0; margin-top:16px;">
+
+      <div></div>
+      <div></div>
+
+      <div style="display:flex; align-items:center; justify-content:center;">
+        <div style="font-size:22px; color:#c7d2fe;">↓</div>
+      </div>
+
+      <div></div>
+      <div></div>
+
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px; max-width:560px; margin-left:auto; margin-right:auto;">
+
+      <div style="display:flex; flex-direction:column; align-items:center; text-align:center; padding:0 10px;">
+        <div style="width:40px; height:40px; border-radius:50%; background:#4f46e5; color:white; font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; margin-bottom:12px;">4</div>
+        <div style="background:#fefce8; border:1px solid #fde68a; border-radius:10px; padding:14px 12px; width:100%;">
+          <h4 style="font-size:12px; font-weight:700; color:#111827; margin-bottom:5px;">Review &amp; Accept Edits</h4>
+          <p style="font-size:11.5px; color:#6b7280;">Each edit shows its exact point contribution. Score updates live with every accept or decline decision.</p>
+          <div style="margin-top:8px; font-size:10px; font-weight:600; color:#92400e; background:#fef9c3; padding:2px 7px; border-radius:20px; display:inline-block;">Interactive</div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; align-items:center; text-align:center; padding:0 10px;">
+        <div style="width:40px; height:40px; border-radius:50%; background:#4f46e5; color:white; font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; margin-bottom:12px;">5</div>
+        <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:10px; padding:14px 12px; width:100%;">
+          <h4 style="font-size:12px; font-weight:700; color:#111827; margin-bottom:5px;">Mark as Applied</h4>
+          <p style="font-size:11.5px; color:#6b7280;">Resume + HTML report saved locally. Application auto-logged to tracker with full history and scores.</p>
+          <div style="margin-top:8px; font-size:10px; font-weight:600; color:#b91c1c; background:#fee2e2; padding:2px 7px; border-radius:20px; display:inline-block;">Closed loop</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Zone 4: How it was built (full width) -->
+  <div class="summary-card" style="margin-bottom:0;">
+    <h3>How It Was Built — AI-Assisted Development</h3>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:4px;">
+
+      <div style="display:flex; gap:10px; align-items:flex-start; background:#f8f9fc; border-radius:8px; padding:12px;">
+        <div style="font-size:20px; flex-shrink:0;">📐</div>
+        <div>
+          <div style="font-size:12px; font-weight:700; color:#111827; margin-bottom:3px;">Designed first, built second</div>
+          <div style="font-size:11.5px; color:#6b7280;">Full product spec written in Claude before a line of code — data model, prompt templates, component architecture, and user flows defined upfront as a living CLAUDE.md document.</div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; align-items:flex-start; background:#f8f9fc; border-radius:8px; padding:12px;">
+        <div style="font-size:20px; flex-shrink:0;">⌨️</div>
+        <div>
+          <div style="font-size:12px; font-weight:700; color:#111827; margin-bottom:3px;">Claude Code as the development environment</div>
+          <div style="font-size:11.5px; color:#6b7280;">Entire codebase built through Claude Code CLI. ~95% of implementation AI-generated directly from the spec. Demonstrates practical fluency with agentic AI tooling beyond just chat interfaces.</div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; align-items:flex-start; background:#f8f9fc; border-radius:8px; padding:12px;">
+        <div style="font-size:20px; flex-shrink:0;">🔁</div>
+        <div>
+          <div style="font-size:12px; font-weight:700; color:#111827; margin-bottom:3px;">Iterative, phase-based delivery</div>
+          <div style="font-size:11.5px; color:#6b7280;">6 defined build phases shipped sequentially — each tested before the next began. Scope decisions made deliberately: two features explicitly skipped when the value didn't justify the complexity.</div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; align-items:flex-start; background:#f8f9fc; border-radius:8px; padding:12px;">
+        <div style="font-size:20px; flex-shrink:0;">🤖</div>
+        <div>
+          <div style="font-size:12px; font-weight:700; color:#111827; margin-bottom:3px;">AI used across the full product stack</div>
+          <div style="font-size:11.5px; color:#6b7280;">Claude used for system design, data modeling, prompt engineering, UI implementation, and debugging — not just code generation. The Claude API is also embedded as a core product feature, not just a dev tool.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Page break -->
+  <div class="page-break"></div>
+
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 2+ — DEEP DIVE
+════════════════════════════════════════════════════════ -->
+
+  <div class="deep-dive-header">
+    <div class="dd-tag">Deep Dive</div>
+    <h2>ResumeOS — Technical &amp; Product Detail</h2>
+    <p>The following sections expand on each pillar for those who want to go deeper.</p>
+  </div>
+
+
+  <!-- D1. Multi-Lens Model -->
+  <section>
+    <div class="section-title">D1 — The Multi-Lens Bullet Model</div>
+    <div class="dd-card">
+      <div class="dd-card-header" style="background:#f5f3ff;">
+        <span>🗂️</span> Same achievement · different framing per target function
+      </div>
+      <div class="dd-card-body">
+        <div class="lens-center">
+          <div class="lens-core">ZS Associates: Global Sales Compensation Tool</div>
+          <div class="lens-sub">Built for 85 countries · ~200 users · 80% time reduction · $200K platform · 8-month build</div>
+          <div style="font-size:11px; color:#9ca3af; margin-top:10px;">↓ Same achievement. Different framing per target function.</div>
+        </div>
+        <div class="lens-row">
+          <div class="lens-card" style="background:#ede9fe;">
+            <div class="lens-fn" style="color:#5b21b6;">Product Management</div>
+            <div class="lens-bul" style="border-color:#7c3aed;">Owned full lifecycle of a $200K B2B global sales compensation platform — from vision and roadmap to build, rollout, and training across 85 countries</div>
+          </div>
+          <div class="lens-card" style="background:#dbeafe;">
+            <div class="lens-fn" style="color:#1d4ed8;">Strategy</div>
+            <div class="lens-bul" style="border-color:#3b82f6;">Directed end-to-end design and deployment of a first-of-its-kind Global Sales Compensation Design Tool, standardizing strategy across 85 countries</div>
+          </div>
+          <div class="lens-card" style="background:#dcfce7;">
+            <div class="lens-fn" style="color:#15803d;">Analytics &amp; Insights</div>
+            <div class="lens-bul" style="border-color:#22c55e;">Engineered regression-based compensation model deployed across 85 countries, reducing plan design time by 80% for ~200 users globally</div>
+          </div>
+          <div class="lens-card" style="background:#fef9c3;">
+            <div class="lens-fn" style="color:#92400e;">Operations</div>
+            <div class="lens-bul" style="border-color:#f59e0b;">Scaled sales compensation operations across 85 countries, reducing manual design time by 80% through process standardization and tool deployment</div>
+          </div>
+        </div>
+        <div style="margin-top:14px; background:#f8fafc; border-radius:8px; padding:11px 14px; font-size:12px; color:#475569;">
+          <strong>The repository also stores full project context per achievement</strong> — the original problem, approach taken, tools used, team size, and outcome. This is the raw material the AI draws on for targeted rewrites, not just the polished bullet text.
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- D2. Scoring -->
+  <section>
+    <div class="section-title">D2 — Two-Layer Scoring Model</div>
+    <div class="scoring-grid">
+
+      <div class="dd-card">
+        <div class="dd-card-header" style="background:#f5f3ff; color:#4c1d95;">
+          <span>🔍</span> Layer 1 — Will you be FOUND? (ATS)
+        </div>
+        <div class="dd-card-body">
+          <div class="dim-row">
+            <span class="dim-name">Keyword Match</span>
+            <span class="dim-weight" style="background:#ede9fe; color:#5b21b6;">35%</span>
+            <span class="dim-note">Tier-weighted · placement multiplier</span>
+          </div>
+          <div style="margin-top:10px; font-size:11px; color:#6b7280;">
+            <div style="margin-bottom:6px;">JD keywords tiered by importance:</div>
+            <div class="row-wrap">
+              <span class="chip" style="background:#fee2e2; color:#b91c1c;">Tier 1 · 3× — Job title terms</span>
+              <span class="chip" style="background:#fef9c3; color:#92400e;">Tier 2 · 2× — Required skills</span>
+              <span class="chip" style="background:#dcfce7; color:#15803d;">Tier 3 · 1× — Preferred / nice-to-have</span>
+            </div>
+            <div style="margin-top:8px;">Placement bonus: Summary (2×) · First bullet (1.5×) · Skills section (1×) · Deep bullets (0.8×)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dd-card">
+        <div class="dd-card-header" style="background:#eff6ff; color:#1e3a8a;">
+          <span>👤</span> Layer 2 — Will you be SHORTLISTED? (Human)
+        </div>
+        <div class="dd-card-body">
+          <div class="dim-row">
+            <span class="dim-name">Skills Alignment</span>
+            <span class="dim-weight" style="background:#dbeafe; color:#1d4ed8;">25%</span>
+            <span class="dim-note">Required 2× · Preferred 1×</span>
+          </div>
+          <div class="dim-row">
+            <span class="dim-name">Experience Relevance</span>
+            <span class="dim-weight" style="background:#dbeafe; color:#1d4ed8;">15%</span>
+            <span class="dim-note">Each bullet rated 1–5 for JD fit</span>
+          </div>
+          <div class="dim-row">
+            <span class="dim-name">Job Fit</span>
+            <span class="dim-weight" style="background:#dbeafe; color:#1d4ed8;">15%</span>
+            <span class="dim-note">Seniority · Function · Industry · Narrative</span>
+          </div>
+          <div class="dim-row">
+            <span class="dim-name">Format Compliance</span>
+            <span class="dim-weight" style="background:#dbeafe; color:#1d4ed8;">10%</span>
+            <span class="dim-note">20+ ATS formatting checks · fully deterministic</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="formula-bar mt12">
+      Overall Score = 35% Keyword + 25% Skills + 15% Relevance + 15% Job Fit + 10% Format
+    </div>
+
+    <div class="benchmarks">
+      <div class="bench"><div class="b-score" style="color:#16a34a;">75+</div><div class="b-label">Strong · apply with confidence</div></div>
+      <div class="bench"><div class="b-score" style="color:#d97706;">60–74</div><div class="b-label">Good match · apply with edits</div></div>
+      <div class="bench"><div class="b-score" style="color:#ea580c;">45–59</div><div class="b-label">Stretch · significant reframing needed</div></div>
+      <div class="bench"><div class="b-score" style="color:#dc2626;">&lt;45</div><div class="b-label">Poor fit · reconsider</div></div>
+    </div>
+  </section>
+
+
+  <!-- D3. AI Integration -->
+  <section>
+    <div class="section-title">D3 — AI Integration Design</div>
+    <div class="dd-card">
+      <div class="dd-card-header" style="background:#f5f3ff;">
+        <span>🤖</span> Everything from a single AI call
+      </div>
+      <div class="dd-card-body">
+
+        <div class="ai-flow-row">
+          <div class="ai-box" style="background:#f0f9ff; border:1px solid #bae6fd;">
+            <h4 style="color:#0c4a6e;">Inputs</h4>
+            <p>Job description · Uploaded resume text · Full experience repository with project context</p>
+          </div>
+          <div class="ai-arrow">→</div>
+          <div class="ai-box" style="background:#ede9fe; border:1px solid #c4b5fd;">
+            <h4 style="color:#4c1d95;">Claude — one prompt</h4>
+            <p>Scores resume · identifies gaps · generates suggested edits · projects post-edit score · writes cover letter</p>
+          </div>
+          <div class="ai-arrow">→</div>
+          <div class="ai-box" style="background:#dcfce7; border:1px solid #86efac;">
+            <h4 style="color:#14532d;">Outputs</h4>
+            <p>Current score · projected score · per-edit point breakdown · job fit analysis · cover letter</p>
+          </div>
+        </div>
+
+        <hr class="ai-divider" />
+
+        <div style="font-size:12px; font-weight:700; color:#374151; margin-bottom:10px;">Post-edit scoring — no second AI call</div>
+        <div class="ai-flow-row">
+          <div class="ai-box" style="background:#f9fafb; border:1px solid #e5e7eb;">
+            <h4 style="color:#374151;">AI returns once</h4>
+            <p>Current score: 52 · Projected score: 72 (if all edits accepted)</p>
+          </div>
+          <div class="ai-arrow">→</div>
+          <div class="ai-box" style="background:#f9fafb; border:1px solid #e5e7eb;">
+            <h4 style="color:#374151;">User accepts some edits</h4>
+            <p>E.g. 3 of 5 accepted · combined impact = 60% of total possible</p>
+          </div>
+          <div class="ai-arrow">→</div>
+          <div class="ai-box" style="background:#f9fafb; border:1px solid #e5e7eb;">
+            <h4 style="color:#374151;">Deterministic interpolation</h4>
+            <p>New score = 52 + (72−52) × 60% = <strong>64</strong>. Math, not AI. Instant.</p>
+          </div>
+        </div>
+
+        <div class="ai-note">
+          <strong>Why not re-run AI after each edit?</strong> A second AI call produces inconsistent scores — the model may change its assessment based on subtle prompt differences. Deterministic interpolation gives a score that is mathematically tied to the original analysis, transparent to the user (each edit shows its exact point contribution), and instant with no added API cost.
+        </div>
+
+        <hr class="ai-divider" />
+
+        <div style="font-size:12px; font-weight:700; color:#374151; margin-bottom:10px;">Two access modes</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:200px; background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:12px 14px;">
+            <div style="font-size:11px; font-weight:700; color:#15803d; margin-bottom:4px;">FREE MODE</div>
+            <div style="font-size:12px; color:#374151;">Prompt is built and shown → user copies to Claude.ai → pastes response back. Zero API cost. Full functionality.</div>
+          </div>
+          <div style="flex:1; min-width:200px; background:#ede9fe; border:1px solid #c4b5fd; border-radius:8px; padding:12px 14px;">
+            <div style="font-size:11px; font-weight:700; color:#5b21b6; margin-bottom:4px;">API MODE</div>
+            <div style="font-size:12px; color:#374151;">Enter Anthropic API key in Settings. Same prompt fires automatically. One toggle — identical UX and output.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- D4. Technical Architecture -->
+  <section>
+    <div class="section-title">D4 — Technical System Architecture</div>
+    <div class="dd-card">
+      <div class="dd-card-header" style="background:#f8fafc;">
+        <span>⚙️</span> End-to-end data flow
+      </div>
+      <div class="dd-card-body">
+
+        <div style="display:flex; flex-direction:column; gap:0;">
+
+          <div class="arch-layer">
+            <div class="arch-label">User Inputs</div>
+            <div class="arch-boxes">
+              <div class="arch-box" style="background:#f0f9ff; border:1px solid #bae6fd;">
+                <h4 style="color:#0369a1;">📄 Resume PDF</h4><p>Existing resume file uploaded by user</p>
+              </div>
+              <div class="arch-box" style="background:#f0f9ff; border:1px solid #bae6fd;">
+                <h4 style="color:#0369a1;">📋 Job Description</h4><p>Raw text pasted from any job board</p>
+              </div>
+              <div class="arch-box" style="background:#f0f9ff; border:1px solid #bae6fd;">
+                <h4 style="color:#0369a1;">🗂️ Experience Repository</h4><p>Stored in localStorage · multi-lens bullets + project context</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="arch-arrow-row">
+            <div class="arch-arrow-spacer"></div>
+            <div class="arch-arrow-body" style="display:flex; gap:10px; flex-wrap:wrap;">
+              <div style="flex:1; text-align:center; font-size:16px; color:#c7d2fe;">↓</div>
+              <div style="flex:1; text-align:center; font-size:16px; color:#c7d2fe;">↓</div>
+              <div style="flex:1; text-align:center; font-size:16px; color:#c7d2fe;">↓</div>
+            </div>
+          </div>
+
+          <div class="arch-layer">
+            <div class="arch-label">Processing</div>
+            <div class="arch-boxes">
+              <div class="arch-box" style="background:#fef9c3; border:1px solid #fde68a;">
+                <h4 style="color:#92400e;">PDF Parser</h4><p>pdfjs-dist · extracts plain text from resume PDF in-browser</p>
+              </div>
+              <div class="arch-box" style="background:#fef9c3; border:1px solid #fde68a;">
+                <h4 style="color:#92400e;">Keyword Extractor</h4><p>Pulls tiered keywords from JD · fuzzy matches against resume text</p>
+              </div>
+              <div class="arch-box" style="background:#fef9c3; border:1px solid #fde68a;">
+                <h4 style="color:#92400e;">Scoring Engine</h4><p>Deterministic · instant format + keyword score before any AI call</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="arch-arrow-row">
+            <div class="arch-arrow-spacer"></div>
+            <div class="arch-arrow-body" style="text-align:center;">
+              <div style="border-top:2px dashed #c7d2fe; margin:4px 20px;"></div>
+              <div style="font-size:16px; color:#c7d2fe; margin-top:2px;">↓</div>
+              <div style="font-size:10px; color:#a5b4fc; font-style:italic;">Resume text + JD keywords + Experience repository sent together to AI</div>
+            </div>
+          </div>
+
+          <div class="arch-layer">
+            <div class="arch-label">AI Service</div>
+            <div class="arch-boxes">
+              <div style="flex:1; background:#ede9fe; border:2px solid #7c3aed; border-radius:9px; padding:12px 14px;">
+                <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:flex-start;">
+                  <div style="flex:1; min-width:160px;">
+                    <h4 style="font-size:12px; font-weight:700; color:#4c1d95; margin-bottom:4px;">Claude — single prompt</h4>
+                    <p style="font-size:11px; color:#5b21b6;">Returns: current score · projected score · suggested edits with point breakdowns · job fit analysis · cover letter</p>
+                  </div>
+                  <div style="display:flex; gap:8px; flex-wrap:wrap; flex-shrink:0;">
+                    <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:6px; padding:7px 10px; font-size:11px;">
+                      <div style="font-weight:700; color:#15803d;">Free Mode</div>
+                      <div style="color:#64748b;">Copy → Claude.ai → paste</div>
+                    </div>
+                    <div style="background:white; border:1px solid #a78bfa; border-radius:6px; padding:7px 10px; font-size:11px;">
+                      <div style="font-weight:700; color:#5b21b6;">API Mode</div>
+                      <div style="color:#64748b;">Direct · auto-parsed</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="arch-arrow-row">
+            <div class="arch-arrow-spacer"></div>
+            <div class="arch-arrow-body" style="text-align:center; font-size:16px; color:#c7d2fe;">↓</div>
+          </div>
+
+          <div class="arch-layer">
+            <div class="arch-label">User Action</div>
+            <div class="arch-boxes">
+              <div class="arch-box" style="background:#f0fdf4; border:1px solid #86efac; flex:2;">
+                <h4 style="color:#15803d;">Accept / Decline Suggested Edits</h4>
+                <p>Each decision triggers deterministic score interpolation · live preview updates · no second AI call</p>
+              </div>
+              <div class="arch-box" style="background:#f0fdf4; border:1px solid #86efac;">
+                <h4 style="color:#15803d;">Live Score Update</h4>
+                <p>Original + (Projected − Original) × accepted ratio</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="arch-arrow-row">
+            <div class="arch-arrow-spacer"></div>
+            <div class="arch-arrow-body" style="text-align:center; font-size:16px; color:#c7d2fe;">↓</div>
+          </div>
+
+          <div class="arch-layer">
+            <div class="arch-label">Outputs</div>
+            <div class="arch-boxes">
+              <div class="arch-box" style="background:#fef2f2; border:1px solid #fca5a5;">
+                <h4 style="color:#b91c1c;">📝 .docx Resume</h4><p>ATS-formatted · generated in-browser via docx library</p>
+              </div>
+              <div class="arch-box" style="background:#fef2f2; border:1px solid #fca5a5;">
+                <h4 style="color:#b91c1c;">📊 HTML Report</h4><p>Self-contained · scores + edits + cover letter · printable</p>
+              </div>
+              <div class="arch-box" style="background:#fef2f2; border:1px solid #fca5a5;">
+                <h4 style="color:#b91c1c;">📋 Application Log</h4><p>Saved to localStorage with full history</p>
+              </div>
+              <div class="arch-box" style="background:#fef2f2; border:1px solid #fca5a5;">
+                <h4 style="color:#b91c1c;">💾 Local Files</h4><p>File System Access API · saves to user-chosen folder</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="margin-top:20px; padding-top:16px; border-top:1px dashed #e5e7eb;">
+          <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#9ca3af; margin-bottom:10px;">Persistence Layer</div>
+          <div class="persist-grid">
+            <div class="persist-box">
+              <h4>localStorage</h4>
+              <p>
+                <code>resumeos_experiences</code> — all roles + bullets<br/>
+                <code>resumeos_analyses</code> — all JD analyses<br/>
+                <code>resumeos_applications</code> — tracker entries<br/>
+                <code>resumeos_settings</code> — API key, preferences
+              </p>
+            </div>
+            <div class="persist-box">
+              <h4>IndexedDB</h4>
+              <p>
+                <code>resumeos_filesystem</code> — FileSystemDirectoryHandle<br/>
+                Persists the user's chosen save folder across sessions (Chrome / Edge only)
+              </p>
+            </div>
+            <div class="persist-box">
+              <h4>External</h4>
+              <p>
+                <code>api.anthropic.com</code> — only in API mode<br/>
+                No other external calls. No backend. No database server. Everything else runs entirely in the browser.
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- D5. Key Product Decisions -->
+  <section>
+    <div class="section-title">D5 — Key Product Decisions &amp; Trade-offs</div>
+    <div class="decisions-grid">
+
+      <div class="dec-card">
+        <span class="dec-tag" style="background:#dcfce7; color:#15803d;">Architecture</span>
+        <h3>Local-first · No backend</h3>
+        <p>All data lives in the browser. No server, no database, no deployment pipeline.</p>
+        <div class="dec-opts">
+          <div class="dec-opt" style="background:#f0fdf4; border:1px solid #86efac;">
+            <div class="opt-lbl" style="color:#15803d;">✓ Chosen because</div>
+            Zero setup · complete privacy · no recurring cost · works offline
+          </div>
+          <div class="dec-opt" style="background:#fef2f2; border:1px solid #fca5a5;">
+            <div class="opt-lbl" style="color:#b91c1c;">✗ Trade-off</div>
+            Single device only · no sync · ~5MB storage ceiling
+          </div>
+        </div>
+      </div>
+
+      <div class="dec-card">
+        <span class="dec-tag" style="background:#dbeafe; color:#1d4ed8;">AI Design</span>
+        <h3>Single AI call + deterministic re-score</h3>
+        <p>One prompt returns current score, projected score, and all edits. Post-edit scoring is pure interpolation.</p>
+        <div class="dec-opts">
+          <div class="dec-opt" style="background:#f0fdf4; border:1px solid #86efac;">
+            <div class="opt-lbl" style="color:#15803d;">✓ Chosen because</div>
+            No circular loop · consistent results · transparent · no added API cost
+          </div>
+          <div class="dec-opt" style="background:#fef2f2; border:1px solid #fca5a5;">
+            <div class="opt-lbl" style="color:#b91c1c;">✗ Trade-off</div>
+            Projected score is an estimate — not a fresh AI opinion after accepting edits
+          </div>
+        </div>
+      </div>
+
+      <div class="dec-card">
+        <span class="dec-tag" style="background:#ede9fe; color:#5b21b6;">Data Model</span>
+        <h3>Multi-lens bullet variants in repository</h3>
+        <p>Same achievement stored with separate bullet text per target function, not as a single generic bullet.</p>
+        <div class="dec-opts">
+          <div class="dec-opt" style="background:#f0fdf4; border:1px solid #86efac;">
+            <div class="opt-lbl" style="color:#15803d;">✓ Chosen because</div>
+            Instant tailoring without AI · preserves nuance · no hallucinated rewrites
+          </div>
+          <div class="dec-opt" style="background:#fef2f2; border:1px solid #fca5a5;">
+            <div class="opt-lbl" style="color:#b91c1c;">✗ Trade-off</div>
+            Higher upfront effort to populate the repository with all variants
+          </div>
+        </div>
+      </div>
+
+      <div class="dec-card">
+        <span class="dec-tag" style="background:#fef9c3; color:#92400e;">UX</span>
+        <h3>Analyzer-first, not Generator-first</h3>
+        <p>Primary flow: paste JD → upload PDF → score → edit. Resume generation from scratch is secondary.</p>
+        <div class="dec-opts">
+          <div class="dec-opt" style="background:#f0fdf4; border:1px solid #86efac;">
+            <div class="opt-lbl" style="color:#15803d;">✓ Chosen because</div>
+            Matches real behavior — you have a resume, you need to optimize it for a specific role
+          </div>
+          <div class="dec-opt" style="background:#fef2f2; border:1px solid #fca5a5;">
+            <div class="opt-lbl" style="color:#b91c1c;">✗ Trade-off</div>
+            Resume generator is underutilized as a standalone starting-from-zero feature
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- D6. Application Tracker -->
+  <section>
+    <div class="section-title">D6 — Closing the Loop: Application Tracker</div>
+    <div class="tracker-grid">
+
+      <div class="t-card">
+        <h3>What gets logged on "Mark as Applied"</h3>
+        <div class="t-row"><span>Company + Role name</span></div>
+        <div class="t-row"><span>Date applied</span></div>
+        <div class="t-row"><span>Original score → Updated score (with delta)</span><span class="t-badge" style="background:#dbeafe; color:#1d4ed8;">Visible</span></div>
+        <div class="t-row"><span>Projected score potential</span></div>
+        <div class="t-row"><span>Edits accepted out of total available</span></div>
+        <div class="t-row"><span>Exact .docx resume that was sent</span><span class="t-badge" style="background:#dcfce7; color:#15803d;">Stored locally</span></div>
+        <div class="t-row"><span>Full HTML analysis report</span></div>
+        <div class="t-row"><span>Status — Applied / Interview / Offer / Rejected</span></div>
+      </div>
+
+      <div class="t-card">
+        <h3>Strategic value of the closed loop</h3>
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:2px;">
+          <div style="background:#f0fdf4; border-radius:7px; padding:10px 12px; font-size:12px; color:#374151;">
+            <strong>Pattern recognition</strong> — do high-score applications convert to interviews at a higher rate?
+          </div>
+          <div style="background:#f0f9ff; border-radius:7px; padding:10px 12px; font-size:12px; color:#374151;">
+            <strong>Edit ROI</strong> — did accepting more suggested edits correlate with better outcomes?
+          </div>
+          <div style="background:#ede9fe; border-radius:7px; padding:10px 12px; font-size:12px; color:#374151;">
+            <strong>Exact version control</strong> — in any interview, pull up the exact resume sent, down to the bullet level.
+          </div>
+          <div style="background:#fef9c3; border-radius:7px; padding:10px 12px; font-size:12px; color:#374151;">
+            <strong>No guesswork</strong> — "Did I apply to this role? With which resume? What was my score?" answered instantly.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+<button class="print-btn no-print" onclick="window.print()">🖨 Print / Save as PDF</button>
+
+</body>
+</html>

@@ -1,0 +1,19 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+
+# Environment variables
+.env
+.env.local
+
+# Personal / private files — not part of the public codebase
+CLAUDE.md
+MD Archive/
+ResumeOS_ProjectDoc.md
+/seedData.ts
+
+# OS
+.DS_Store
+Thumbs.db
