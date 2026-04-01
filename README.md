@@ -63,7 +63,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173).
+Open your browser to `http://localhost:5173`.
 
 To use AI features, either:
 - **Free mode** (default) — copy the generated prompt to [Claude.ai](https://claude.ai) and paste the response back
