@@ -1,7 +1,9 @@
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
-import workerSrc from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
-GlobalWorkerOptions.workerSrc = workerSrc;
+GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.mjs',
+  import.meta.url
+).href;
 
 export async function extractTextFromPDF(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
