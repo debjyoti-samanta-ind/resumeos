@@ -13,7 +13,7 @@ const STATUS_COLORS: Record<ApplicationStatus, string> = {
   Offer:     'bg-green-100 text-green-700',
 };
 
-type SortKey = 'serialNo' | 'company' | 'roleName' | 'dateApplied' | 'status' | 'originalScore';
+type SortKey = 'serialNo' | 'company' | 'roleName' | 'dateApplied' | 'status' | 'score';
 
 function scoreColor(n: number) {
   if (n >= 75) return 'text-green-600';
@@ -55,7 +55,7 @@ export default function ApplicationTracker() {
     else if (sortKey === 'roleName') cmp = a.roleName.localeCompare(b.roleName);
     else if (sortKey === 'dateApplied') cmp = a.dateApplied.localeCompare(b.dateApplied);
     else if (sortKey === 'status')   cmp = a.status.localeCompare(b.status);
-    else if (sortKey === 'originalScore') cmp = a.originalScore - b.originalScore;
+    else if (sortKey === 'score') cmp = (a.updatedScore ?? a.originalScore) - (b.updatedScore ?? b.originalScore);
     return sortDir === 'asc' ? cmp : -cmp;
   });
 
@@ -137,7 +137,7 @@ export default function ApplicationTracker() {
                 <Th col="roleName"     label="Role" />
                 <Th col="dateApplied"  label="Date Applied" />
                 <Th col="status"       label="Status" />
-                <Th col="originalScore" label="Score" />
+                <Th col="score" label="Score" />
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
